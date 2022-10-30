@@ -4,8 +4,8 @@ name: default
 
 trigger:
   ref:
-    - refs/tags/v**
-    - refs/heads/main
+  - refs/heads/main
+  - refs/tags/v**
 
 clone:
   depth: 1
