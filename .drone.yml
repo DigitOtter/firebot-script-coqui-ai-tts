@@ -1,0 +1,29 @@
+kind: pipeline
+type: docker
+name: default
+
+trigger:
+  ref:
+    - refs/tags/v**
+    - refs/heads/main
+
+clone:
+  depth: 1
+
+steps:
+- name: build
+  image: node:14
+  environment:
+  commands:
+  - npm install
+  - npm run build
+
+- name: gitea_release
+  image: plugins/gitea-release
+  settings:
+    api_key:
+      from_secret: GITEA_API_KEY
+    base_url:
+      from_secret: GITEA_REPO_URL
+    files: dist/*
+
