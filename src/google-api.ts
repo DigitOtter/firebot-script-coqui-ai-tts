@@ -6,23 +6,14 @@ interface SynthesizeTextResponse {
 }
 
 export async function getTTSAudioContent(effect: EffectModel, googleCloudAPIKey: string): Promise<string | null> {
-  const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleCloudAPIKey}`;
+  const url = `http://localhost:5002/api/tts?speaker_id=p376&style_wav=&text=` + effect.text;
 
-  const response = await axios.post<SynthesizeTextResponse>(url, {
-    input: {
-      text: effect.text,
-    },
-    voice: {
-      languageCode: effect.voiceName.substring(0,5),
-      name: effect.voiceName,
-      ssmlGender: effect.voiceGender,
-    },
-    audioConfig: {
-      audioEncoding: "MP3",
-      pitch: effect.pitch,
-      speakingRate: effect.speakingRate
-    },
+  const response = await axios.get(url, {
+    responseType: 'arraybuffer',
+    headers: {
+      'Content-Type': 'audio/wav'
+    }
   });
 
-  return response?.data?.audioContent;
+  return response.data;
 }

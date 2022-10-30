@@ -61,31 +61,31 @@ export function buildGoogleTtsEffectType(
       if ($scope.effect.volume == null) {
         $scope.effect.volume = 10;
       }
-      $scope.voices = [
-        {name:"en-US-Wavenet-A", language: "English (US) | Male"},
-        {name:"en-US-Wavenet-B", language: "English (US) | Male"},
-        {name:"en-US-Wavenet-C", language: "English (US) | Female"},
-        {name:"en-US-Wavenet-D", language: "English (US) | Male"},
-        {name:"en-US-Wavenet-E", language: "English (US) | Female"},
-        {name:"en-US-Wavenet-F", language: "English (US) | Female"},
-        {name:"en-US-Wavenet-G", language: "English (US) | Female"},
-        {name:"en-US-Wavenet-H", language: "English (US) | Female"},
-        {name:"en-US-Wavenet-I", language: "English (US) | Male"},
-        {name:"en-US-Wavenet-J", language: "English (US) | Male"},
-        {name:"en-GB-Wavenet-A", language: "English (UK) | Female"},
-        {name:"en-GB-Wavenet-B", language: "English (UK) | Male"},
-        {name:"en-GB-Wavenet-C", language: "English (UK) | Female"},
-        {name:"en-GB-Wavenet-D", language: "English (UK) | Male"},
-        {name:"en-GB-Wavenet-F", language: "English (UK) | Female"},
-        {name:"en-AU-Wavenet-A", language: "English (AU) | Female"},
-        {name:"en-AU-Wavenet-B", language: "English (AU) | Male"},
-        {name:"en-AU-Wavenet-C", language: "English (AU) | Female"},
-        {name:"en-AU-Wavenet-D", language: "English (AU) | Male"},
-        {name:"en-IN-Wavenet-A", language: "English (IN) | Female"},
-        {name:"en-IN-Wavenet-B", language: "English (IN) | Male"},
-        {name:"en-IN-Wavenet-C", language: "English (IN) | Male"},
-        {name:"en-IN-Wavenet-D", language: "English (IN) | Female"}
-      ]as Array<{name:string;language:string}>;
+      // $scope.voices = [
+      //   {name:"en-US-Wavenet-A", language: "English (US) | Male"},
+      //   {name:"en-US-Wavenet-B", language: "English (US) | Male"},
+      //   {name:"en-US-Wavenet-C", language: "English (US) | Female"},
+      //   {name:"en-US-Wavenet-D", language: "English (US) | Male"},
+      //   {name:"en-US-Wavenet-E", language: "English (US) | Female"},
+      //   {name:"en-US-Wavenet-F", language: "English (US) | Female"},
+      //   {name:"en-US-Wavenet-G", language: "English (US) | Female"},
+      //   {name:"en-US-Wavenet-H", language: "English (US) | Female"},
+      //   {name:"en-US-Wavenet-I", language: "English (US) | Male"},
+      //   {name:"en-US-Wavenet-J", language: "English (US) | Male"},
+      //   {name:"en-GB-Wavenet-A", language: "English (UK) | Female"},
+      //   {name:"en-GB-Wavenet-B", language: "English (UK) | Male"},
+      //   {name:"en-GB-Wavenet-C", language: "English (UK) | Female"},
+      //   {name:"en-GB-Wavenet-D", language: "English (UK) | Male"},
+      //   {name:"en-GB-Wavenet-F", language: "English (UK) | Female"},
+      //   {name:"en-AU-Wavenet-A", language: "English (AU) | Female"},
+      //   {name:"en-AU-Wavenet-B", language: "English (AU) | Male"},
+      //   {name:"en-AU-Wavenet-C", language: "English (AU) | Female"},
+      //   {name:"en-AU-Wavenet-D", language: "English (AU) | Male"},
+      //   {name:"en-IN-Wavenet-A", language: "English (IN) | Female"},
+      //   {name:"en-IN-Wavenet-B", language: "English (IN) | Male"},
+      //   {name:"en-IN-Wavenet-C", language: "English (IN) | Male"},
+      //   {name:"en-IN-Wavenet-D", language: "English (IN) | Female"}
+      // ]as Array<{name:string;language:string}>;
 
       if ($scope.effect.voiceName == null){
         $scope.effect.voiceName = ($scope.voices as any)[0].name;
@@ -101,6 +101,23 @@ export function buildGoogleTtsEffectType(
       if ($scope.effect.speakingRate == null) {
         $scope.effect.speakingRate = 1;
       }
+
+      fetch("http://localhost:5002/speaker_ids")
+      .then(response => {
+        if(response.ok) {
+          return response.json()
+        }
+        else {
+          return Object();
+        }
+      })
+      .then(data => {
+        var ids = [];
+        for(const key in data) {
+          ids.push({name: key, language: data[key]});
+        }
+        $scope.voices = ids as Array<{name:string;language:string}>;
+      }); 
     },
     optionsValidator: (effect) => {
       const errors = [];
@@ -121,7 +138,9 @@ export function buildGoogleTtsEffectType(
           return true;
         }
 
-        const filePath = path.join(process.cwd(), `tts${uuid()}.mp3`);
+        const filePath = path.join(process.cwd(), `tts${uuid()}.wav`);
+
+        logger.debug(filePath)
 
         // save audio content to file
         await fs.writeFile(filePath, Buffer.from(audioContent, "base64"));
@@ -131,7 +150,7 @@ export function buildGoogleTtsEffectType(
           "getSoundDuration",
           {
             path: filePath,
-            format: "mp3",
+            format: "wav",
           }
         );
 
@@ -139,12 +158,15 @@ export function buildGoogleTtsEffectType(
         frontendCommunicator.send("playsound", {
           volume: effect.volume || 10,
           audioOutputDevice: effect.audioOutputDevice,
-          format: "mp3",
+          format: "wav",
           filepath: filePath,
         });
-
+        
         // wait for the sound to finish (plus 1.5 sec buffer)
         await wait((soundDuration + 1.5) * 1000);
+
+        // var response = axios.get("http://localhost:5002/speaker_ids");
+        // console.log(response);
 
         // remove the audio file
         await fs.unlink(filePath);
