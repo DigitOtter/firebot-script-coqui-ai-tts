@@ -1,17 +1,18 @@
 import { Firebot } from "firebot-custom-scripts-types";
-import { buildGoogleTtsEffectType } from "./google-tts-effect";
+import { getDefaultSettings } from "http2";
+import { buildCoquiAiTtsEffectType } from "./coquiai-tts-effect";
 import { initLogger } from "./logger";
 
 interface Params {
-  googleCloudAPIKey: string
+  coquiAiTtsServer: string
 }
 
 const script: Firebot.CustomScript<Params> = {
   getScriptManifest: () => {
     return {
-      name: "Google Cloud TTS Effect",
-      description: "Adds the Google Cloud TTS effect",
-      author: "heyaapl",
+      name: "CoquiAI TTS Effect",
+      description: "Adds the CoquiAI TTS effect",
+      author: "DigitOtter",
       version: "1.2",
       firebotVersion: "5",
       startupOnly: true,
@@ -19,11 +20,11 @@ const script: Firebot.CustomScript<Params> = {
   },
   getDefaultParameters: () => {
     return {
-      googleCloudAPIKey: {
+      coquiAiTtsServer: {
         type: "string",
-        description: "Google Cloud API Key (Restart Firebot After Setting)",
-        secondaryDescription: "You must have a Google Cloud API Key & Cloud Text-to-Speech Enabled for this to work. Follow the steps here to get started: https://github.com/heyaapl/firebot-script-google-cloud-tts#readme",
-        default: ""
+        description: "CoquiAI TTS Server (Restart Firebot After Setting)",
+        secondaryDescription: "Set the CoquiAI server address",
+        default: "http://localhost:5002"
       }
     };
   },
@@ -33,7 +34,7 @@ const script: Firebot.CustomScript<Params> = {
     const path = (runRequest.modules as any).path;
     initLogger(logger);
     effectManager.registerEffect(
-      buildGoogleTtsEffectType(frontendCommunicator, fs, path, runRequest.parameters.googleCloudAPIKey)
+      buildCoquiAiTtsEffectType(frontendCommunicator, fs, path, runRequest.parameters.coquiAiTtsServer)
     );
   },
 };

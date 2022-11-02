@@ -1,22 +1,23 @@
-import axios from "axios";
 import { Firebot, ScriptModules } from "firebot-custom-scripts-types";
 import { v4 as uuid } from "uuid";
-import { getTTSAudioContent } from "./google-api";
+import { getTTSAudioContent } from "./coquiai-api";
 import { logger } from "./logger";
 import { wait } from "./utils";
 import { EffectModel } from "./types";
+import { stringify } from "querystring";
 
-export function buildGoogleTtsEffectType(
+
+export function buildCoquiAiTtsEffectType(
   frontendCommunicator: ScriptModules["frontendCommunicator"],
   fs: ScriptModules["fs"],
   path: ScriptModules["path"],
-  googleCloudAPIKey: string
+  coquiAiTtsServer: string
 ) {
-  const googleTtsEffectType: Firebot.EffectType<EffectModel> = {
+  var coquiAiTtsEffectType: Firebot.EffectType<EffectModel> = {
     definition: {
-      id: "heyaapl:google-cloud-tts",
-      name: "Google Cloud Text-to-Speech",
-      description: "TTS via Google Cloud",
+      id: "digitotter:coquiai-tts",
+      name: "CoquiAI Text-to-Speech",
+      description: "TTS via CoquiAI server",
       icon: "fad fa-microphone-alt",
       categories: ["fun"],
       dependencies: [],
@@ -27,7 +28,7 @@ export function buildGoogleTtsEffectType(
       </eos-container>
 
       <eos-container header="Voice" pad-top="true">
-        <ui-select ng-model="effect.voiceName" theme="bootstrap">
+        <ui-select ng-model="effect.speakerId" theme="bootstrap">
             <ui-select-match placeholder="Select or search for a voice...">{{$select.selected.name}}</ui-select-match>
             <ui-select-choices repeat="voice.name as voice in voices | filter: { language: $select.search }" style="position:relative;">
                 <div ng-bind-html="voice.name | highlight: $select.search"></div>
@@ -55,43 +56,18 @@ export function buildGoogleTtsEffectType(
           </div>
       </eos-container>
 
+      <!--<eos-container header="CoquiAI URL">
+        <input type="text" ng-model="effect.url" size="10" maxlength="100" value="${coquiAiTtsServer}" class="form-control" menu-position="under" read-only></input>
+      </eos-container>-->
+
       <eos-audio-output-device effect="effect" pad-top="true"></eos-audio-output-device>
     `,
     optionsController: ($scope) => {
       if ($scope.effect.volume == null) {
         $scope.effect.volume = 10;
       }
-      // $scope.voices = [
-      //   {name:"en-US-Wavenet-A", language: "English (US) | Male"},
-      //   {name:"en-US-Wavenet-B", language: "English (US) | Male"},
-      //   {name:"en-US-Wavenet-C", language: "English (US) | Female"},
-      //   {name:"en-US-Wavenet-D", language: "English (US) | Male"},
-      //   {name:"en-US-Wavenet-E", language: "English (US) | Female"},
-      //   {name:"en-US-Wavenet-F", language: "English (US) | Female"},
-      //   {name:"en-US-Wavenet-G", language: "English (US) | Female"},
-      //   {name:"en-US-Wavenet-H", language: "English (US) | Female"},
-      //   {name:"en-US-Wavenet-I", language: "English (US) | Male"},
-      //   {name:"en-US-Wavenet-J", language: "English (US) | Male"},
-      //   {name:"en-GB-Wavenet-A", language: "English (UK) | Female"},
-      //   {name:"en-GB-Wavenet-B", language: "English (UK) | Male"},
-      //   {name:"en-GB-Wavenet-C", language: "English (UK) | Female"},
-      //   {name:"en-GB-Wavenet-D", language: "English (UK) | Male"},
-      //   {name:"en-GB-Wavenet-F", language: "English (UK) | Female"},
-      //   {name:"en-AU-Wavenet-A", language: "English (AU) | Female"},
-      //   {name:"en-AU-Wavenet-B", language: "English (AU) | Male"},
-      //   {name:"en-AU-Wavenet-C", language: "English (AU) | Female"},
-      //   {name:"en-AU-Wavenet-D", language: "English (AU) | Male"},
-      //   {name:"en-IN-Wavenet-A", language: "English (IN) | Female"},
-      //   {name:"en-IN-Wavenet-B", language: "English (IN) | Male"},
-      //   {name:"en-IN-Wavenet-C", language: "English (IN) | Male"},
-      //   {name:"en-IN-Wavenet-D", language: "English (IN) | Female"}
-      // ]as Array<{name:string;language:string}>;
-
-      if ($scope.effect.voiceName == null){
-        $scope.effect.voiceName = ($scope.voices as any)[0].name;
-      }
-      //Google Cloud TTS is not switching genders, so this has been disabled for now. Uncomment the
-      //UI HTML to enable Gendered voices once Google's API returns the approriately gendered voice.
+      $scope.voices = []as Array<{name:string;language:string}>;
+  
       if ($scope.effect.voiceGender == null) {
         $scope.effect.voiceGender = "MALE";
       }
@@ -101,12 +77,16 @@ export function buildGoogleTtsEffectType(
       if ($scope.effect.speakingRate == null) {
         $scope.effect.speakingRate = 1;
       }
-
-      fetch("http://localhost:5002/speaker_ids")
+  
+      fetch(coquiAiTtsServer + "/speaker_ids")
       .then(response => {
         if(response.ok) {
-          return response.json()
-        }
+          try {
+            return response.json();
+          } catch (error) {
+            return Object();
+          }
+        } 
         else {
           return Object();
         }
@@ -114,10 +94,20 @@ export function buildGoogleTtsEffectType(
       .then(data => {
         var ids = [];
         for(const key in data) {
-          ids.push({name: key, language: data[key]});
+          if(!key.includes("\n")) {
+            ids.push({name: key, language: data[key]});
+          }
         }
         $scope.voices = ids as Array<{name:string;language:string}>;
-      }); 
+  
+        if ($scope.effect.speakerId == null) {
+          if(($scope.voices as Array<{name:string;language:string}>).length > 0) {
+            $scope.effect.speakerId = ($scope.voices as any)[0].name;
+          }
+        }
+  
+        console.log($scope.effect);
+      });
     },
     optionsValidator: (effect) => {
       const errors = [];
@@ -130,17 +120,15 @@ export function buildGoogleTtsEffectType(
       const effect = event.effect;
 
       try {
-        //  synthesize text via google tts
-        const audioContent = await getTTSAudioContent(effect, googleCloudAPIKey);
+        //  synthesize text via CoquiAI tts
+        const audioContent = await getTTSAudioContent(effect, coquiAiTtsServer);
 
         if (audioContent == null) {
-          // call to google tts api failed
+          // call to CoquiAI tts api failed
           return true;
         }
 
         const filePath = path.join(process.cwd(), `tts${uuid()}.wav`);
-
-        logger.debug(filePath)
 
         // save audio content to file
         await fs.writeFile(filePath, Buffer.from(audioContent, "base64"));
@@ -165,13 +153,10 @@ export function buildGoogleTtsEffectType(
         // wait for the sound to finish (plus 1.5 sec buffer)
         await wait((soundDuration + 1.5) * 1000);
 
-        // var response = axios.get("http://localhost:5002/speaker_ids");
-        // console.log(response);
-
         // remove the audio file
         await fs.unlink(filePath);
       } catch (error) {
-        logger.error("Google Cloud TTS Effect failed", error);
+        logger.error("CoquiAI TTS Effect failed", error);
       }
 
       // returning true tells the firebot effect system this effect has completed
@@ -179,5 +164,14 @@ export function buildGoogleTtsEffectType(
       return true;
     },
   };
-  return googleTtsEffectType;
+
+  // Hack to directly insert server URL (coquiAiTtsServer) directly into function. 
+  // Required because optionsController is called from frontend where variable is not defined
+  var str = coquiAiTtsEffectType.optionsController.toString();
+  str = str.replace('coquiAiTtsServer', `"${coquiAiTtsServer}"`);
+  coquiAiTtsEffectType.optionsController = eval(str);
+
+  console.log(str);
+
+  return coquiAiTtsEffectType;
 }

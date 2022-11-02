@@ -1,8 +1,8 @@
 {
-  "name": "google-cloud-tts",
-  "scriptOutputName": "googleCloudTts",
-  "version": "1.0.0",
-  "description": "A enhanced TTS effect using Google Cloud for Firebot",
+  "name": "coquiai-tts",
+  "scriptOutputName": "coquiAiTts",
+  "version": "0.0.1",
+  "description": "A TTS effect using Coqui AI TTS for Firebot. Modified from https://github.com/heyaapl/firebot-script-google-cloud-tts",
   "main": "",
   "scripts": {
     "build": "webpack",
@@ -10,7 +10,7 @@
     "copy": "node ./scripts/copy-build.js",
     "test": "jest"
   },
-  "author": "ebiggz",
+  "author": "DigitOtter",
   "license": "GNU3",
   "devDependencies": {
     "@types/node": "^14.14.6",
