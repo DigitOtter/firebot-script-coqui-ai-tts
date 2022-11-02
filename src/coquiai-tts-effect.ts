@@ -28,7 +28,7 @@ export function buildCoquiAiTtsEffectType(
       </eos-container>
 
       <eos-container header="Voice" pad-top="true">
-        <ui-select ng-model="effect.speakerId" theme="bootstrap">
+        <ui-select ng-model="effect.speakerId" theme="bootstrap" ng-disabled="!voices.length">
             <ui-select-match placeholder="Select or search for a voice...">{{$select.selected.name}}</ui-select-match>
             <ui-select-choices repeat="voice.name as voice in voices | filter: { language: $select.search }" style="position:relative;">
                 <div ng-bind-html="voice.name | highlight: $select.search"></div>
@@ -100,13 +100,14 @@ export function buildCoquiAiTtsEffectType(
         }
         $scope.voices = ids as Array<{name:string;language:string}>;
   
-        if ($scope.effect.speakerId == null) {
-          if(($scope.voices as Array<{name:string;language:string}>).length > 0) {
+        if(($scope.voices as Array<{name:string;language:string}>).length > 0) {
+          if ($scope.effect.speakerId == null) {
             $scope.effect.speakerId = ($scope.voices as any)[0].name;
           }
         }
-  
-        console.log($scope.effect);
+        else {
+          $scope.effect.speakerId = null;
+        }
       });
     },
     optionsValidator: (effect) => {
@@ -170,8 +171,6 @@ export function buildCoquiAiTtsEffectType(
   var str = coquiAiTtsEffectType.optionsController.toString();
   str = str.replace('coquiAiTtsServer', `"${coquiAiTtsServer}"`);
   coquiAiTtsEffectType.optionsController = eval(str);
-
-  console.log(str);
 
   return coquiAiTtsEffectType;
 }
