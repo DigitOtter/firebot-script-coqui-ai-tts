@@ -8,7 +8,7 @@ The extension requires a separate running CoquiAI server, either locally or on a
 ## Installation
 - Download `coquiAiTts.js` file from [Releases](https://github.com/DigitOtter/firebot-script-coqui-ai-tts/releases)
 - Add `coquiAiTts.js` as a startup script in Firebot (Settings > Advanced > Startup Scripts) and enter the URL to your CoquiAI TTS server
-- Start your CoquiAI server
+- Start your CoquiAI server as described below
 - Restart Firebot
 
 ### Install and run your own CoquiAI TTS server
