@@ -41,12 +41,12 @@ export function buildCoquiAiTtsEffectType(
             <dropdown-select options="{ MALE: 'Male', FEMALE: 'Female'}" selected="effect.voiceGender"></dropdown-select>
       </eos-container>
       -->
-      <eos-container header="Pitch & Speed" pad-top="true">
+      <!--<eos-container header="Pitch & Speed" pad-top="true">
         <div>Pitch</div>
         <rzslider rz-slider-model="effect.pitch" rz-slider-options="{floor: -20, ceil: 20, hideLimitLabels: true, showSelectionBar: true, step: 0.5, precision: 1}"></rzslider>
         <div>Speed</div>
         <rzslider rz-slider-model="effect.speakingRate" rz-slider-options="{floor: 0.25, ceil: 4, hideLimitLabels: true, showSelectionBar: true, step: 0.05, precision: 2}"></rzslider>
-      </eos-container>
+      </eos-container>-->
 
       <eos-container header="Volume" pad-top="true">
           <div class="volume-slider-wrapper">
